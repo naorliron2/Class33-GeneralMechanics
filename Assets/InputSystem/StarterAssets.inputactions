@@ -232,7 +232,7 @@
                     "name": "",
                     "id": "c220eb79-0ced-47bc-b506-9ee12546794e",
                     "path": "<Keyboard>/e",
-                    "interactions": "Press",
+                    "interactions": "",
                     "processors": "",
                     "groups": "KeyboardMouse",
                     "action": "Interact",

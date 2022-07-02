@@ -4,63 +4,73 @@ using UnityEngine;
 
 public class PlayerInteractor : MonoBehaviour
 {
+
+    [Header("Cast Setting")]
     [SerializeField] float rayLength;
     [SerializeField] LayerMask interactableLayers;
-    [SerializeField] Transform camera;
-    [SerializeField] StarterAssets.StarterAssetsInputs inputs;
     [SerializeField] Vector2 extents;
-    [SerializeField] GameObject gui;
     RaycastHit hit;
 
+    [Header("Dependencies")]
+    [SerializeField] Transform camera;
+    //replace this with your input
+    [SerializeField] StarterAssets.StarterAssetsInputs inputs;
+    [SerializeField] GameObject gui;
     [SerializeField] RectTransform viewSphere;
-    [SerializeField] float viewSphereDist;
-    [SerializeField] float lerpSpeed;
 
-    [SerializeField] bool useRaycast;
+    [Header("Settings")]
+    [SerializeField] float lerpSpeed;
+    [SerializeField] float ladderZOffset;
+
     private void Update()
     {
-        if (useRaycast)
+        if (Physics.BoxCast(camera.position, extents, camera.forward, out hit, Quaternion.identity, rayLength, interactableLayers))
         {
-            if (Physics.Raycast(camera.position, camera.forward, out hit, rayLength, interactableLayers))
+            SetViewSpherePosHit();
+            gui.SetActive(true);
+            if (inputs.interactPressed)
             {
-                SetViewSpherePosHit();
-                gui.SetActive(true);
-                if (inputs.interactPressed)
-                {
-                    hit.transform.gameObject.GetComponent<Door>().Toggle();
-                    viewSphere.transform.position = hit.point;
-                }
-            }
-            else
-            {
-                SetViewSpherePosMiss();
-                gui.SetActive(false);
+                Interact();
             }
         }
         else
         {
-            if (Physics.BoxCast(camera.position, extents, camera.forward, out hit, Quaternion.identity, rayLength, interactableLayers))
-            {
-                SetViewSpherePosHit();
-                gui.SetActive(true);
-                if (inputs.interactPressed)
-                {
-                    hit.transform.gameObject.GetComponent<Door>().Toggle();
-                }
-            }
-            else
-            {
-                SetViewSpherePosMiss();
+            SetViewSpherePosMiss();
 
-                gui.SetActive(false);
+            gui.SetActive(false);
 
-            }
+        }
+    }
+
+    private void Interact()
+    {
+        GameObject hitObj = hit.transform.gameObject;
+        if (hit.transform.CompareTag("Door"))
+        {
+            hitObj.GetComponent<Door>().Toggle();
+        }
+
+        else if (hit.transform.CompareTag("Ladder"))
+        {
+            CharacterController characterController = GetComponent<CharacterController>();
+
+            characterController.enabled = false;
+            transform.position = new Vector3(hit.transform.position.x, transform.position.y, hit.transform.position.z) + hit.transform.forward * -ladderZOffset;
+            transform.rotation = hit.transform.rotation;
+            characterController.enabled = true;
+
+            Climb climbScript = GetComponent<Climb>();
+            climbScript.enabled = true;
+            climbScript.OnClimbEnabled();
+
+            GetComponent<StarterAssets.ThirdPersonController>().enabled = false;
+
         }
     }
 
     private void SetViewSpherePosHit()
     {
-        if (Vector3.Distance(viewSphere.position, Camera.main.WorldToScreenPoint(hit.transform.position)) <  1)
+        if (Vector3.Distance(viewSphere.position, Camera.main.WorldToScreenPoint(hit.transform.position)) < 1)
         {
             viewSphere.position = Camera.main.WorldToScreenPoint(hit.transform.position);
         }
@@ -75,17 +85,4 @@ public class PlayerInteractor : MonoBehaviour
         viewSphere.localPosition = new Vector3(0, 0, 0);
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        if (useRaycast)
-        {
-            Gizmos.DrawRay(camera.position, camera.forward * rayLength);
-        }
-        else
-        {
-            DebugDrawExtension.DrawCastBox(camera.position, extents, camera.forward * rayLength, Color.red);
-
-        }
-    }
 }
