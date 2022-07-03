@@ -6,21 +6,27 @@ public class Door : MonoBehaviour
 {
     bool open;
 
+    [SerializeField] KeyType key;
+    [SerializeField] Inventory playerInventory;
     [SerializeField] Vector3 openAmount;
     public void Toggle()
     {
         //In most cases this would play an animation
-
-        if (open)
+        int keyindex = playerInventory.ContainsKey(key);
+        if (keyindex != -1)
         {
-            transform.position -= openAmount;
-            open = false;
-        }
-        else
-        {
-            transform.position += openAmount;
-            open = true;
+            if (open)
+            {
+                transform.position -= openAmount;
+                open = false;
+            }
+            else
+            {
+                transform.position += openAmount;
+                open = true;
 
+            }
+            playerInventory.removeKey(keyindex);
         }
     }
 }

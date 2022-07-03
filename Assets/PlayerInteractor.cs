@@ -17,10 +17,21 @@ public class PlayerInteractor : MonoBehaviour
     [SerializeField] StarterAssets.StarterAssetsInputs inputs;
     [SerializeField] GameObject gui;
     [SerializeField] RectTransform viewSphere;
+    [SerializeField] Inventory inventory;
 
     [Header("Settings")]
     [SerializeField] float lerpSpeed;
     [SerializeField] float ladderZOffset;
+    [SerializeField] float ladderYOffset;
+
+    CharacterController characterController;
+
+
+    private void Start()
+    {
+        characterController = GetComponent<CharacterController>();
+        inventory = GetComponent<Inventory>();
+    }
 
     private void Update()
     {
@@ -52,19 +63,30 @@ public class PlayerInteractor : MonoBehaviour
 
         else if (hit.transform.CompareTag("Ladder"))
         {
-            CharacterController characterController = GetComponent<CharacterController>();
-
+            GetComponent<StarterAssets.ThirdPersonController>().enabled = false;
             characterController.enabled = false;
-            transform.position = new Vector3(hit.transform.position.x, transform.position.y, hit.transform.position.z) + hit.transform.forward * -ladderZOffset;
+          
+            if (transform.position.y > hit.transform.position.y)
+            {
+                transform.position = new Vector3(hit.transform.position.x, transform.position.y - ladderYOffset, hit.transform.position.z) + hit.transform.forward * -ladderZOffset;
+
+            }
+            else
+            {
+                transform.position = new Vector3(hit.transform.position.x, transform.position.y, hit.transform.position.z) + hit.transform.forward * -ladderZOffset;
+            }
+            
             transform.rotation = hit.transform.rotation;
             characterController.enabled = true;
 
             Climb climbScript = GetComponent<Climb>();
             climbScript.enabled = true;
             climbScript.OnClimbEnabled();
-
-            GetComponent<StarterAssets.ThirdPersonController>().enabled = false;
-
+        } else if (hit.transform.CompareTag("Key"))
+        {
+            Key key = hit.transform.GetComponentInParent<Key>();
+            inventory.AddKey(key);
+            key.OnPickup();
         }
     }
 
